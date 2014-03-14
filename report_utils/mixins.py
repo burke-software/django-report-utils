@@ -5,6 +5,7 @@ except ImportError:
     
 from django.http import HttpResponse
 from django.contrib.contenttypes.models import ContentType
+from django.db.models.fields.related import ReverseManyRelatedObjectsDescriptor
 from django.core import exceptions
 from openpyxl.workbook import Workbook
 from openpyxl.writer.excel import save_virtual_workbook
