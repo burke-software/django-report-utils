@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from django.contrib.contenttypes.models import ContentType
 from django.db.models.fields.related import ReverseManyRelatedObjectsDescriptor
 from django.core import exceptions
+from django.db.models import Avg, Count, Sum, Max, Min
 from openpyxl.workbook import Workbook
 from openpyxl.writer.excel import save_virtual_workbook
 from openpyxl.cell import get_column_letter
@@ -20,16 +21,15 @@ from model_introspection import (
     get_custom_fields_from_model,)
 
 class DataExportMixin(object):
-    def build_sheet(self, data, ws, sheet_name='report', header=None):
+    def build_sheet(self, data, ws, sheet_name='report', header=None, widths=None):
         ws.title = re.sub(r'\W+', '', sheet_name)[:30]
         if header:
-            i = 0
-            for header_cell in header:
+            for i, header_cell in enumerate(header):
                 cell = ws.cell(row=0, column=i)
                 cell.value = header_cell
                 cell.style.font.bold = True
-                ws.column_dimensions[get_column_letter(i+1)].width = field.width
-                i += 1
+                if widths:
+                    ws.column_dimensions[get_column_letter(i+1)].width = widths[i]
         
         for row in data:
             try:
@@ -52,7 +52,7 @@ class DataExportMixin(object):
         response['Content-Length'] = myfile.tell()
         return response
 
-    def list_to_xlsx_response(self, data, title='report', header=None):
+    def list_to_xlsx_response(self, data, title='report', header=None, widths=None):
         """ Make 2D list into a xlsx response for download 
         data can be a 2d array or a dict of 2d arrays
         like {'sheet_1': [['A1', 'B1']]}
@@ -68,7 +68,7 @@ class DataExportMixin(object):
                 i += 1
         else:
             ws = wb.worksheets[0]
-            self.build_sheet(data, ws, header=header)
+            self.build_sheet(data, ws, header=header, widths=widths)
 
         return self.build_xlsx_response(wb, title=title)
     
