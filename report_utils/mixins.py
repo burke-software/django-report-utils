@@ -247,13 +247,13 @@ class DataExportMixin(object):
                     try:
                         filtered_report_rows = sorted(
                             filtered_report_rows,
-                            key=lambda x: sort_helper(x, sort_field[0]-1),
+                            key=lambda x: self.sort_helper(x, sort_field[0]-1),
                             reverse=sort_field[1]
                             )
                     except TypeError: # Sorry crappy way to determine if date is being sorted
                         filtered_report_rows = sorted(
                             filtered_report_rows,
-                            key=lambda x: sort_helper(x, sort_field[0]-1, date_field=True),
+                            key=lambda x: self.sort_helper(x, sort_field[0]-1, date_field=True),
                             reverse=sort_field[1]
                             )
                 values_and_properties_list = filtered_report_rows
@@ -344,7 +344,15 @@ class DataExportMixin(object):
             values_and_properties_list = None
     
         return values_and_properties_list, message
-        
+    
+    def sort_helper(self, x, sort_key, date_field=False):
+        # If comparing datefields, assume null is the min year
+        if date_field and x[sort_key] == None:
+            result = datetime.date(datetime.MINYEAR, 1, 1)
+        else:
+            result = x[sort_key]     
+        return result.lower() if isinstance(result, basestring) else result        
+
 
 class GetFieldsMixin(object):
     def get_fields(self, model_class, field_name='', path='', path_verbose=''):
@@ -431,3 +439,4 @@ class GetFieldsMixin(object):
         path += '__'
         
         return (new_fields, model_ct, path)
+
