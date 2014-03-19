@@ -184,7 +184,7 @@ class DataExportMixin(object):
                 if not group: 
                     for row in values_list:
                         row = list(row)
-                        values_and_properties_list.append(row)
+                        values_and_properties_list.append(row[1:])
                         obj = None # we will get this only if needed for more complex processing
                         #related_objects
                         remove_row = False
