@@ -184,12 +184,14 @@ class DataExportMixin(object):
                 if not group: 
                     for row in values_list:
                         row = list(row)
-                        obj = model_class.objects.get(pk=row.pop(0)) 
+                        values_and_properties_list.append(row)
+                        obj = None # we will get this only if needed for more complex processing
                         #related_objects
                         remove_row = False
-                        values_and_properties_list.append(row)
                         # filter properties (remove rows with excluded properties)
-                        for property_filter in property_filters: 
+                        for property_filter in property_filters:
+                            if not obj:
+                                obj = model_class.objects.get(pk=row.pop(0))
                             root_relation = property_filter.path.split('__')[0]
                             if root_relation in m2m_relations: 
                                 pk = row[0]
@@ -217,6 +219,8 @@ class DataExportMixin(object):
                                 if field in display_totals.keys():
                                     increment_total(field, display_totals, row[i])
                             for position, display_property in property_list.iteritems(): 
+                                if not obj:
+                                    obj = model_class.objects.get(pk=row.pop(0))
                                 relations = display_property.split('__')
                                 root_relation = relations[0]
                                 if root_relation in m2m_relations: 
@@ -234,7 +238,9 @@ class DataExportMixin(object):
                                         val = None
                                 values_and_properties_list[-1].insert(position, val)
                                 increment_total(display_property, display_totals, val)
-                            for position, display_custom in custom_list.iteritems(): 
+                            for position, display_custom in custom_list.iteritems():
+                                if not obj:
+                                    obj = model_class.objects.get(pk=row.pop(0))
                                 val = obj.get_custom_value(display_custom)
                                 values_and_properties_list[-1].insert(position, val)
                                 increment_total(display_custom, display_totals, val)
@@ -330,7 +336,6 @@ class DataExportMixin(object):
                             pass
                         display_totals_row[df.position-1] = value
     
-            if display_totals:
                 values_and_properties_list = (
                     values_and_properties_list + [
                         ['TOTALS'] + (len(fields_and_properties) - 1) * ['']
