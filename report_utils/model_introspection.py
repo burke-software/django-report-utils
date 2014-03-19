@@ -18,6 +18,7 @@ def get_properties_from_model(model_class):
     return sorted(properties, key=lambda k: k['label'])
 
 def get_relation_fields_from_model(model_class):
+    """ Get related fields (m2m, FK, and reverse FK) """
     relation_fields = []
     all_fields_names = model_class._meta.get_all_field_names()
     for field_name in all_fields_names:
