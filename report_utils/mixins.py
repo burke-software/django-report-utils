@@ -54,12 +54,10 @@ class DataExportMixin(object):
         response['Content-Disposition'] = 'attachment; filename=%s' % title
         response['Content-Length'] = myfile.tell()
         return response
-
-    def list_to_xlsx_response(self, data, title='report', header=None, widths=None):
-        """ Make 2D list into a xlsx response for download 
-        data can be a 2d array or a dict of 2d arrays
-        like {'sheet_1': [['A1', 'B1']]}
-        """
+    
+    
+    def list_to_workbook(self, data, title='report', header=None, widths=None):
+        """ Create just a openpxl workbook from a list of data """
         wb = Workbook()
         title = re.sub(r'\W+', '', title)[:30]
         
@@ -72,7 +70,29 @@ class DataExportMixin(object):
         else:
             ws = wb.worksheets[0]
             self.build_sheet(data, ws, header=header, widths=widths)
+        return wb
+    
+    
+    def list_to_xlsx_file(self, data, title='report', header=None, widths=None):
+        """ Make 2D list into a xlsx response for download 
+        data can be a 2d array or a dict of 2d arrays
+        like {'sheet_1': [['A1', 'B1']]}
+        returns a StringIO file
+        """
+        wb = self.list_to_workbook(data, title, header, widths)
+        if not title.endswith('.xlsx'):
+            title += '.xlsx'
+        myfile = StringIO.StringIO()
+        myfile.write(save_virtual_workbook(wb))
+        return myfile
+    
 
+    def list_to_xlsx_response(self, data, title='report', header=None, widths=None):
+        """ Make 2D list into a xlsx response for download 
+        data can be a 2d array or a dict of 2d arrays
+        like {'sheet_1': [['A1', 'B1']]}
+        """
+        wb = self.list_to_workbook(data, title, header, widths)
         return self.build_xlsx_response(wb, title=title)
     
     def add_aggregates(self, queryset, display_fields):
