@@ -413,7 +413,6 @@ class GetFieldsMixin(object):
         properties = get_properties_from_model(model_class)
         custom_fields = get_custom_fields_from_model(model_class)
         app_label = model_class._meta.app_label
-        print path_verbose
     
         if field_name != '':
             field = model_class._meta.get_field_by_name(field_name)
