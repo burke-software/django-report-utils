@@ -2,7 +2,7 @@ try:
     import cStringIO as StringIO
 except ImportError:
     import StringIO
-    
+
 from django.http import HttpResponse
 from django.contrib.contenttypes.models import ContentType
 from django.db.models.fields.related import ReverseManyRelatedObjectsDescriptor
@@ -33,7 +33,7 @@ class DataExportMixin(object):
                 cell.style.font.bold = True
                 if widths:
                     ws.column_dimensions[get_column_letter(i+1)].width = widths[i]
-        
+
         for row in data:
             try:
                 ws.append(row)
@@ -54,13 +54,13 @@ class DataExportMixin(object):
         response['Content-Disposition'] = 'attachment; filename=%s' % title
         response['Content-Length'] = myfile.tell()
         return response
-    
-    
+
+
     def list_to_workbook(self, data, title='report', header=None, widths=None):
         """ Create just a openpxl workbook from a list of data """
         wb = Workbook()
         title = re.sub(r'\W+', '', title)[:30]
-        
+
         if isinstance(data, dict):
             i = 0
             for sheet_name, sheet_data in data.items():
@@ -71,10 +71,10 @@ class DataExportMixin(object):
             ws = wb.worksheets[0]
             self.build_sheet(data, ws, header=header, widths=widths)
         return wb
-    
-    
+
+
     def list_to_xlsx_file(self, data, title='report', header=None, widths=None):
-        """ Make 2D list into a xlsx response for download 
+        """ Make 2D list into a xlsx response for download
         data can be a 2d array or a dict of 2d arrays
         like {'sheet_1': [['A1', 'B1']]}
         returns a StringIO file
@@ -85,16 +85,16 @@ class DataExportMixin(object):
         myfile = StringIO.StringIO()
         myfile.write(save_virtual_workbook(wb))
         return myfile
-    
+
 
     def list_to_xlsx_response(self, data, title='report', header=None, widths=None):
-        """ Make 2D list into a xlsx response for download 
+        """ Make 2D list into a xlsx response for download
         data can be a 2d array or a dict of 2d arrays
         like {'sheet_1': [['A1', 'B1']]}
         """
         wb = self.list_to_workbook(data, title, header, widths)
         return self.build_xlsx_response(wb, title=title)
-    
+
     def add_aggregates(self, queryset, display_fields):
         for display_field in display_fields:
             if hasattr(display_field, 'aggregate'):
@@ -109,7 +109,7 @@ class DataExportMixin(object):
                 elif display_field.aggregate == "Sum":
                     queryset = queryset.annotate(Sum(display_field.path + display_field.field))
         return queryset
-    
+
     def report_to_list(self, queryset, display_fields, user, property_filters=[], preview=False):
         """ Create list from a report with all data filtering
         preview: Return only first 50
@@ -132,10 +132,10 @@ class DataExportMixin(object):
                 choices = model_field.choices
                 new_display_fields.append(DisplayField(path, '', field, '', '', None, None, choices))
             display_fields = new_display_fields
-            
+
         message= ""
         objects = self.add_aggregates(queryset, display_fields)
-    
+
         # Display Values
         display_field_paths = []
         property_list = {}
@@ -144,8 +144,8 @@ class DataExportMixin(object):
         def append_display_total(display_totals, display_field, display_field_key):
             if display_field.total:
                 display_totals[display_field_key] = {'val': Decimal('0.00')}
-    
-    
+
+
         for i, display_field in enumerate(display_fields):
             model = get_model_from_path_string(model_class, display_field.path)
             if user.has_perm(model._meta.app_label + '.change_' + model._meta.module_name) \
@@ -154,10 +154,10 @@ class DataExportMixin(object):
                 # TODO: clean this up a bit
                 display_field_key = display_field.path + display_field.field
                 if '[property]' in display_field.field_verbose:
-                    property_list[i] = display_field_key 
+                    property_list[i] = display_field_key
                     append_display_total(display_totals, display_field, display_field_key)
                 elif '[custom' in display_field.field_verbose:
-                    custom_list[i] = display_field_key 
+                    custom_list[i] = display_field_key
                     append_display_total(display_totals, display_field, display_field_key)
                 elif display_field.aggregate == "Avg":
                     display_field_key += '__avg'
@@ -196,7 +196,7 @@ class DataExportMixin(object):
                     else:
                         display_totals[display_field_key]['val'] += Decimal('1.00')
 
-            # get pk for primary and m2m relations in order to retrieve objects 
+            # get pk for primary and m2m relations in order to retrieve objects
             # for adding properties to report rows
             display_field_paths.insert(0, 'pk')
             m2m_relations = []
@@ -209,7 +209,7 @@ class DataExportMixin(object):
                     m2m_relations.append(property_root)
             values_and_properties_list = []
             filtered_report_rows = []
-            group = None 
+            group = None
             for df in display_fields:
                 if df.group:
                     group = df.path + df.field
@@ -219,7 +219,7 @@ class DataExportMixin(object):
             else:
                 values_list = objects.values_list(*display_field_paths)
 
-            if not group: 
+            if not group:
                 for row in values_list:
                     row = list(row)
                     values_and_properties_list.append(row[1:])
@@ -231,7 +231,7 @@ class DataExportMixin(object):
                         if not obj:
                             obj = model_class.objects.get(pk=row.pop(0))
                         root_relation = property_filter.path.split('__')[0]
-                        if root_relation in m2m_relations: 
+                        if root_relation in m2m_relations:
                             pk = row[0]
                             if pk is not None:
                                 # a related object exists
@@ -256,12 +256,12 @@ class DataExportMixin(object):
                         for i, field in enumerate(display_field_paths[1:]):
                             if field in display_totals.keys():
                                 increment_total(field, display_totals, row[i])
-                        for position, display_property in property_list.iteritems(): 
+                        for position, display_property in property_list.iteritems():
                             if not obj:
                                 obj = model_class.objects.get(pk=row.pop(0))
                             relations = display_property.split('__')
                             root_relation = relations[0]
-                            if root_relation in m2m_relations: 
+                            if root_relation in m2m_relations:
                                 pk = row.pop(0)
                                 if pk is not None:
                                     # a related object exists
@@ -307,22 +307,22 @@ class DataExportMixin(object):
             message = "Permission Denied on %s" % report.root_model.name
 
         # add choice list display and display field formatting
-        choice_lists = {} 
-        display_formats = {} 
+        choice_lists = {}
+        display_formats = {}
         final_list = []
         for df in display_fields:
-            if df.choices:
+            if df.choices and hasattr(df, 'choices_dict'):
                 df_choices = df.choices_dict
                 # Insert blank and None as valid choices
                 df_choices[''] = ''
                 df_choices[None] = ''
-                choice_lists.update({df.position: df_choices}) 
+                choice_lists.update({df.position: df_choices})
             if hasattr(df, 'display_format') and df.display_format:
                 display_formats.update({df.position: df.display_format})
 
         for row in values_and_properties_list:
             # add display totals for grouped result sets
-            # TODO: dry this up, duplicated logic in non-grouped total routine 
+            # TODO: dry this up, duplicated logic in non-grouped total routine
             if group:
                 # increment totals for fields
                 for i, field in enumerate(display_field_paths[1:]):
@@ -349,11 +349,11 @@ class DataExportMixin(object):
 
         if display_totals:
             display_totals_row = []
-            
+
             fields_and_properties = list(display_field_paths[1:])
-            for position, value in property_list.iteritems(): 
+            for position, value in property_list.iteritems():
                 fields_and_properties.insert(position, value)
-            for i, field in enumerate(fields_and_properties): 
+            for i, field in enumerate(fields_and_properties):
                 if field in display_totals.keys():
                     display_totals_row += [display_totals[field]['val']]
                 else:
@@ -380,22 +380,22 @@ class DataExportMixin(object):
                     ['TOTALS'] + (len(fields_and_properties) - 1) * ['']
                     ] + [display_totals_row]
                 )
-    
+
         return values_and_properties_list, message
-    
+
     def sort_helper(self, x, sort_key, date_field=False):
         # If comparing datefields, assume null is the min year
         if date_field and x[sort_key] == None:
             result = datetime.date(datetime.MINYEAR, 1, 1)
         else:
-            result = x[sort_key]     
-        return result.lower() if isinstance(result, basestring) else result        
+            result = x[sort_key]
+        return result.lower() if isinstance(result, basestring) else result
 
 
 class GetFieldsMixin(object):
     def get_fields(self, model_class, field_name='', path='', path_verbose=''):
         """ Get fields and meta data from a model
-        
+
         :param model_class: A django model class
         :param field_name: The field name to get sub fields from
         :param path: path of our field in format
@@ -413,7 +413,7 @@ class GetFieldsMixin(object):
         properties = get_properties_from_model(model_class)
         custom_fields = get_custom_fields_from_model(model_class)
         app_label = model_class._meta.app_label
-    
+
         if field_name != '':
             field = model_class._meta.get_field_by_name(field_name)
             if path_verbose:
@@ -424,16 +424,16 @@ class GetFieldsMixin(object):
                 path_verbose += field[0].m2m_reverse_field_name()
             else:
                 path_verbose += field[0].name
-            
+
             path += field_name
-            path += '__' 
+            path += '__'
             if field[2]: # Direct field
                 new_model = field[0].related.parent_model
                 path_verbose = new_model.__name__.lower()
             else: # Indirect related field
                 new_model = field[0].model
                 path_verbose = new_model.__name__.lower()
-           
+
             fields = get_direct_fields_from_model(new_model)
             if hasattr(new_model, 'report_builder_exclude_fields'):
                 good_fields = []
@@ -441,11 +441,11 @@ class GetFieldsMixin(object):
                     if not field.name in new_model.report_builder_exclude_fields:
                         good_fields += [field]
                 fields = good_fields
-            
+
             custom_fields = get_custom_fields_from_model(new_model)
             properties = get_properties_from_model(new_model)
             app_label = new_model._meta.app_label
-            
+
         return {
            'fields': fields,
            'custom_fields': custom_fields,
@@ -454,7 +454,7 @@ class GetFieldsMixin(object):
            'path_verbose': path_verbose,
            'app_label': app_label,
         }
-    
+
     def get_related_fields(self, model_class, field_name, path="", path_verbose=""):
         """ Get fields for a given model """
         field = model_class._meta.get_field_by_name(field_name)
@@ -464,16 +464,16 @@ class GetFieldsMixin(object):
         else:
             # Indirect related field
             new_model = field[0].model()
-        
+
         new_fields = get_relation_fields_from_model(new_model)
         model_ct = ContentType.objects.get_for_model(new_model)
-    
+
         if path_verbose:
             path_verbose += "::"
         path_verbose += field[0].name
-        
+
         path += field_name
         path += '__'
-        
+
         return (new_fields, model_ct, path)
 
