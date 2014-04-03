@@ -13,6 +13,8 @@ from openpyxl.writer.excel import save_virtual_workbook
 from openpyxl.cell import get_column_letter
 import re
 from collections import namedtuple
+from decimal import Decimal
+from numbers import Number
 
 from model_introspection import (
     get_relation_fields_from_model,
@@ -360,7 +362,7 @@ class DataExportMixin(object):
                     display_totals_row += ['']
 
             # add formatting to display totals
-            for df in displayfields:
+            for df in display_fields:
                 if df.display_format:
                     try:
                         value = Decimal(display_totals_row[df.position-1])
