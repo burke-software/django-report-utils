@@ -66,6 +66,8 @@ class DataExportMixin(object):
         if isinstance(data, dict):
             i = 0
             for sheet_name, sheet_data in data.items():
+                if i > 0:
+                    wb.create_sheet()
                 ws = wb.worksheets[i]
                 self.build_sheet(sheet_data, ws, sheet_name=sheet_name, header=header)
                 i += 1
