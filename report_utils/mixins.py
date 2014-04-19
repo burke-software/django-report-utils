@@ -1,7 +1,4 @@
-try:
-    import cStringIO as StringIO
-except ImportError:
-    import StringIO
+from six import BytesIO
 
 from django.http import HttpResponse
 from django.contrib.contenttypes.models import ContentType
@@ -16,7 +13,7 @@ from collections import namedtuple
 from decimal import Decimal
 from numbers import Number
 
-from model_introspection import (
+from report_utils.model_introspection import (
     get_relation_fields_from_model,
     get_properties_from_model,
     get_direct_fields_from_model,
@@ -48,7 +45,7 @@ class DataExportMixin(object):
         """ Take a workbook and return a xlsx file response """
         if not title.endswith('.xlsx'):
             title += '.xlsx'
-        myfile = StringIO.StringIO()
+        myfile = BytesIO()
         myfile.write(save_virtual_workbook(wb))
         response = HttpResponse(
             myfile.getvalue(),
@@ -84,7 +81,7 @@ class DataExportMixin(object):
         wb = self.list_to_workbook(data, title, header, widths)
         if not title.endswith('.xlsx'):
             title += '.xlsx'
-        myfile = StringIO.StringIO()
+        myfile = BytesIO()
         myfile.write(save_virtual_workbook(wb))
         return myfile
 
@@ -202,7 +199,7 @@ class DataExportMixin(object):
             # for adding properties to report rows
             display_field_paths.insert(0, 'pk')
             m2m_relations = []
-            for position, property_path in property_list.iteritems():
+            for position, property_path in property_list.items():
                 property_root = property_path.split('__')[0]
                 root_class = model_class
                 property_root_class = getattr(root_class, property_root)
@@ -258,7 +255,7 @@ class DataExportMixin(object):
                         for i, field in enumerate(display_field_paths[1:]):
                             if field in display_totals.keys():
                                 increment_total(field, display_totals, row[i])
-                        for position, display_property in property_list.iteritems():
+                        for position, display_property in property_list.items():
                             if not obj:
                                 obj = model_class.objects.get(pk=row.pop(0))
                             relations = display_property.split('__')
@@ -278,7 +275,7 @@ class DataExportMixin(object):
                                     val = None
                             values_and_properties_list[-1].insert(position, val)
                             increment_total(display_property, display_totals, val)
-                        for position, display_custom in custom_list.iteritems():
+                        for position, display_custom in custom_list.items():
                             if not obj:
                                 obj = model_class.objects.get(pk=row.pop(0))
                             val = obj.get_custom_value(display_custom)
@@ -331,9 +328,9 @@ class DataExportMixin(object):
                     if field in display_totals.keys():
                         increment_total(field, display_totals, row[i])
             row = list(row)
-            for position, choice_list in choice_lists.iteritems():
+            for position, choice_list in choice_lists.items():
                 row[position-1] = unicode(choice_list[row[position-1]])
-            for position, display_format in display_formats.iteritems():
+            for position, display_format in display_formats.items():
                 # convert value to be formatted into Decimal in order to apply
                 # numeric formats
                 try:
