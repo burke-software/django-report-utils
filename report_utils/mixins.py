@@ -1,4 +1,4 @@
-from six import BytesIO
+from six import BytesIO, text_type
 
 from django.http import HttpResponse
 from django.contrib.contenttypes.models import ContentType
@@ -34,6 +34,7 @@ class DataExportMixin(object):
                     ws.column_dimensions[get_column_letter(i+1)].width = widths[i]
 
         for row in data:
+            row = map(text_type, row) # Otherwise openpyxl gets a type error
             try:
                 ws.append(row)
             except ValueError as e:
