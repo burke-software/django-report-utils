@@ -327,7 +327,7 @@ class DataExportMixin(object):
             values_and_properties_list = filtered_report_rows
         else:
             values_and_properties_list = []
-            message = "Permission Denied on %s" % report.root_model.name
+            message = "Permission Denied"
 
         # add choice list display and display field formatting
         choice_lists = {}
