@@ -55,7 +55,12 @@ class DataExportMixin(object):
                     ws.column_dimensions[get_column_letter(i+1)].width = widths[i]
 
         for row in data:
-            row = map(text_type, row) # Otherwise openpyxl gets a type error
+            for i in range(len(row)):
+                item = row[i]
+                # If item is a regular string
+                if isinstance(item, str):
+                    # Change it to a unicode string
+                    row[i] = text_type(item, "UTF-8")
             try:
                 ws.append(row)
             except ValueError as e:
