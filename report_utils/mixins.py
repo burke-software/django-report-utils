@@ -212,12 +212,12 @@ class DataExportMixin(object):
                     append_display_total(display_totals, display_field, display_field_key)
             else:
                 message += "You don't have permission to " + display_field.name
-                
+
         try:
             model_name = model_class._meta.model_name
         except AttributeError:
             model_name = model_class._meta.module_name # needed for Django 1.4.* (LTS)
-            
+
         if user.has_perm(model_class._meta.app_label + '.change_' + model_name) \
         or user.has_perm(model_class._meta.app_label + '.view_' + model_name):
 
@@ -237,7 +237,11 @@ class DataExportMixin(object):
             for position, property_path in property_list.items():
                 property_root = property_path.split('__')[0]
                 root_class = model_class
-                property_root_class = getattr(root_class, property_root)
+                try:
+                    property_root_class = getattr(root_class, property_root)
+                # django-hstore schema compatibility
+                except AttributeError:
+                    continue
                 if type(property_root_class) == ReverseManyRelatedObjectsDescriptor:
                     display_field_paths.insert(1, '%s__pk' % property_root)
                     m2m_relations.append(property_root)
