@@ -485,23 +485,26 @@ class GetFieldsMixin(object):
 
     def get_related_fields(self, model_class, field_name, path="", path_verbose=""):
         """ Get fields for a given model """
-        field = model_class._meta.get_field_by_name(field_name)
-        if field[2]:
-            # Direct field
-            new_model = field[0].related.parent_model()
+        if field_name:
+            field = model_class._meta.get_field_by_name(field_name)
+            if field[2]:
+                # Direct field
+                new_model = field[0].related.parent_model()
+            else:
+                # Indirect related field
+                new_model = field[0].model()
+
+            if path_verbose:
+                path_verbose += "::"
+            path_verbose += field[0].name
+
+            path += field_name
+            path += '__'
         else:
-            # Indirect related field
-            new_model = field[0].model()
+            new_model = model_class
 
         new_fields = get_relation_fields_from_model(new_model)
         model_ct = ContentType.objects.get_for_model(new_model)
-
-        if path_verbose:
-            path_verbose += "::"
-        path_verbose += field[0].name
-
-        path += field_name
-        path += '__'
 
         return (new_fields, model_ct, path)
 
