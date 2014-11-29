@@ -61,6 +61,8 @@ class DataExportMixin(object):
                 if isinstance(item, str):
                     # Change it to a unicode string
                     row[i] = text_type(item, "UTF-8")
+                elif type(item) is dict:
+                    row[i] = text_type(item)
             try:
                 ws.append(row)
             except ValueError as e:
