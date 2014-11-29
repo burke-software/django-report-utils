@@ -212,8 +212,14 @@ class DataExportMixin(object):
                     append_display_total(display_totals, display_field, display_field_key)
             else:
                 message += "You don't have permission to " + display_field.name
-        if user.has_perm(model_class._meta.app_label + '.change_' + model_class._meta.model_name) \
-        or user.has_perm(model_class._meta.app_label + '.view_' + model_class._meta.model_name):
+                
+        try:
+            model_name = model_class._meta.model_name
+        except AttributeError:
+            model_name = model_class._meta.module_name # needed for Django 1.4.* (LTS)
+            
+        if user.has_perm(model_class._meta.app_label + '.change_' + model_name) \
+        or user.has_perm(model_class._meta.app_label + '.view_' + model_name):
 
             def increment_total(display_field_key, display_totals, val):
                 if display_totals.has_key(display_field_key):
