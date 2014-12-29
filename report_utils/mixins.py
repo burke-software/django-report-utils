@@ -60,7 +60,7 @@ class DataExportMixin(object):
                 # If item is a regular string
                 if isinstance(item, str):
                     # Change it to a unicode string
-                    row[i] = text_type(item, "UTF-8")
+                    row[i] = text_type(item)
                 elif type(item) is dict:
                     row[i] = text_type(item)
             try:

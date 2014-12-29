@@ -17,16 +17,22 @@ def get_properties_from_model(model_class):
             properties.append(dict(label=attr_name, name=attr_name.strip('_').replace('_',' ')))
     return sorted(properties, key=lambda k: k['label'])
 
+
 def get_relation_fields_from_model(model_class):
     """ Get related fields (m2m, FK, and reverse FK) """
     relation_fields = []
     all_fields_names = model_class._meta.get_all_field_names()
     for field_name in all_fields_names:
         field = model_class._meta.get_field_by_name(field_name)
+        # get_all_field_names will return the same field
+        # both with and without _id. Ignore the duplicate.
+        if field_name[-3:] == '_id' and field_name[:-3] in all_fields_names:
+            continue
         if field[3] or not field[2] or hasattr(field[0], 'related'):
             field[0].field_name = field_name
             relation_fields += [field[0]]
     return relation_fields
+
 
 def get_direct_fields_from_model(model_class):
     """ Direct, not m2m, not FK """
@@ -48,7 +54,7 @@ def get_custom_fields_from_model(model_class):
             content_type = None
         custom_fields = CustomField.objects.filter(content_type=content_type)
         return custom_fields
-    
+
 def get_model_from_path_string(root_model, path):
     """ Return a model class for a related model
     root_model is the class of the initial model
