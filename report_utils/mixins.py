@@ -1,4 +1,4 @@
-from six import BytesIO, text_type
+from six import BytesIO, text_type, string_types
 
 from django.http import HttpResponse
 from django.contrib.contenttypes.models import ContentType
@@ -12,6 +12,7 @@ import re
 from collections import namedtuple
 from decimal import Decimal
 from numbers import Number
+import datetime
 
 from report_utils.model_introspection import (
     get_relation_fields_from_model,
@@ -326,21 +327,25 @@ class DataExportMixin(object):
                     if preview and len(filtered_report_rows) == 50:
                         break
             if hasattr(display_fields, 'filter'):
-                sort_fields = display_fields.filter(sort__gt=0).order_by('-sort').\
-                    values_list('position', 'sort_reverse')
+                sort_fields = display_fields.filter(
+                    sort__gt=0,
+                ).order_by('-sort').values_list('position', 'sort_reverse')
                 for sort_field in sort_fields:
+                    sort_value = sort_field[0]
                     try:
                         filtered_report_rows = sorted(
                             filtered_report_rows,
-                            key=lambda x: self.sort_helper(x, sort_field[0]-1),
+                            key=lambda x: self.sort_helper(x, sort_value),
                             reverse=sort_field[1]
-                            )
-                    except TypeError: # Sorry crappy way to determine if date is being sorted
+                        )
+                    # Crappy way to deal with null dates.
+                    except TypeError:
                         filtered_report_rows = sorted(
                             filtered_report_rows,
-                            key=lambda x: self.sort_helper(x, sort_field[0]-1, date_field=True),
+                            key=lambda x: self.sort_helper(
+                                x, sort_value, date_field=True),
                             reverse=sort_field[1]
-                            )
+                        )
             values_and_properties_list = filtered_report_rows
         else:
             values_and_properties_list = []
@@ -429,7 +434,11 @@ class DataExportMixin(object):
             result = datetime.date(datetime.MINYEAR, 1, 1)
         else:
             result = x[sort_key]
-        return result.lower() if isinstance(result, basestring) else result
+        if isinstance(result, string_types):
+            return result.lower()
+        elif result is None:
+            return ''
+        return result
 
 
 class GetFieldsMixin(object):
