@@ -61,7 +61,10 @@ class DataExportMixin(object):
                 # If item is a regular string
                 if isinstance(item, str):
                     # Change it to a unicode string
-                    row[i] = text_type(item)
+                    try:
+                        row[i] = text_type(item)
+                    except UnicodeDecodeError:
+                        row[i] = text_type(item.decode('utf-8', 'ignore'))
                 elif type(item) is dict:
                     row[i] = text_type(item)
             try:
