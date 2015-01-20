@@ -378,19 +378,19 @@ class DataExportMixin(object):
                         increment_total(field, display_totals, row[i])
             row = list(row)
             for position, choice_list in choice_lists.items():
-                row[position-1] = unicode(choice_list[row[position-1]])
+                row[position] = unicode(choice_list[row[position]])
             for position, display_format in display_formats.items():
                 # convert value to be formatted into Decimal in order to apply
                 # numeric formats
                 try:
-                    value = Decimal(row[position-1])
+                    value = Decimal(row[position])
                 except:
-                    value = row[position-1]
+                    value = row[position]
                 # Try to format the value, let it go without formatting for ValueErrors
                 try:
-                    row[position-1] = display_format.string.format(value)
+                    row[position] = display_format.string.format(value)
                 except ValueError:
-                    row[position-1] = value
+                    row[position] = value
             final_list.append(row)
         values_and_properties_list = final_list
 
