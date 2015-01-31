@@ -1,5 +1,6 @@
 """ Functioned to introspect a model """
 from django.contrib.contenttypes.models import ContentType
+from django.db.models.fields import FieldDoesNotExist
 from django.conf import settings
 import inspect
 
@@ -44,16 +45,20 @@ def get_direct_fields_from_model(model_class):
             direct_fields += [field[0]]
     return direct_fields
 
+
 def get_custom_fields_from_model(model_class):
     """ django-custom-fields support """
     if 'custom_field' in settings.INSTALLED_APPS:
         from custom_field.models import CustomField
         try:
-            content_type = ContentType.objects.get(model=model_class._meta.module_name,app_label=model_class._meta.app_label)
+            content_type = ContentType.objects.get(
+                model=model_class._meta.module_name,
+                app_label=model_class._meta.app_label)
         except ContentType.DoesNotExist:
             content_type = None
         custom_fields = CustomField.objects.filter(content_type=content_type)
         return custom_fields
+
 
 def get_model_from_path_string(root_model, path):
     """ Return a model class for a related model
@@ -62,9 +67,13 @@ def get_model_from_path_string(root_model, path):
     """
     for path_section in path.split('__'):
         if path_section:
-            field = root_model._meta.get_field_by_name(path_section)
+            try:
+                field = root_model._meta.get_field_by_name(path_section)
+            except FieldDoesNotExist:
+                return root_model
             if field[2]:
-                root_model = field[0].related.parent_model()
+                if hasattr(field[0], 'related'):
+                    root_model = field[0].related.parent_model()
             else:
                 root_model = field[0].model
     return root_model

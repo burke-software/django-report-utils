@@ -3,7 +3,6 @@ from six import BytesIO, text_type, string_types
 from django.http import HttpResponse
 from django.contrib.contenttypes.models import ContentType
 from django.db.models.fields.related import ReverseManyRelatedObjectsDescriptor
-from django.core import exceptions
 from django.db.models import Avg, Count, Sum, Max, Min
 from openpyxl.workbook import Workbook
 from openpyxl.writer.excel import save_virtual_workbook
@@ -12,6 +11,7 @@ import re
 from collections import namedtuple
 from decimal import Decimal
 from numbers import Number
+from functools import reduce
 import datetime
 
 from report_utils.model_introspection import (
@@ -21,7 +21,11 @@ from report_utils.model_introspection import (
     get_model_from_path_string,
     get_custom_fields_from_model,)
 
-DisplayField = namedtuple("DisplayField", "path path_verbose field field_verbose aggregate total group choices")
+DisplayField = namedtuple(
+    "DisplayField",
+    "path path_verbose field field_verbose aggregate total group choices",
+)
+
 
 class DataExportMixin(object):
     def build_sheet(self, data, ws, sheet_name='report', header=None, widths=None):
@@ -182,12 +186,12 @@ class DataExportMixin(object):
 
         for i, display_field in enumerate(display_fields):
             model = get_model_from_path_string(model_class, display_field.path)
-            if user.has_perm(model._meta.app_label + '.change_' + model._meta.module_name) \
-            or user.has_perm(model._meta.app_label + '.view_' + model._meta.module_name) \
+            if user.has_perm(model._meta.app_label + '.change_' + model._meta.model_name) \
+            or user.has_perm(model._meta.app_label + '.view_' + model._meta.model_name) \
             or not model:
                 # TODO: clean this up a bit
                 display_field_key = display_field.path + display_field.field
-                if '[property]' in display_field.field_verbose:
+                if display_field.field_type == "Property":
                     property_list[i] = display_field_key
                     append_display_total(display_totals, display_field, display_field_key)
                 elif '[custom' in display_field.field_verbose:
@@ -228,7 +232,7 @@ class DataExportMixin(object):
         or user.has_perm(model_class._meta.app_label + '.view_' + model_name):
 
             def increment_total(display_field_key, display_totals, val):
-                if display_totals.has_key(display_field_key):
+                if display_field_key in display_totals:
                     # Booleans are Numbers - blah
                     if isinstance(val, Number) and not isinstance(val, bool):
                         # do decimal math for all numbers
@@ -487,12 +491,6 @@ class GetFieldsMixin(object):
                 path_verbose = new_model.__name__.lower()
 
             fields = get_direct_fields_from_model(new_model)
-            if hasattr(new_model, 'report_builder_exclude_fields'):
-                good_fields = []
-                for field in fields:
-                    if not field.name in new_model.report_builder_exclude_fields:
-                        good_fields += [field]
-                fields = good_fields
 
             custom_fields = get_custom_fields_from_model(new_model)
             properties = get_properties_from_model(new_model)
