@@ -23,7 +23,7 @@ from report_utils.model_introspection import (
 
 DisplayField = namedtuple(
     "DisplayField",
-    "path path_verbose field field_verbose aggregate total group choices",
+    "path path_verbose field field_verbose aggregate total group choices field_type",
 )
 
 
@@ -91,7 +91,6 @@ class DataExportMixin(object):
         response['Content-Length'] = myfile.tell()
         return response
 
-
     def list_to_workbook(self, data, title='report', header=None, widths=None):
         """ Create just a openpxl workbook from a list of data """
         wb = Workbook()
@@ -103,13 +102,13 @@ class DataExportMixin(object):
                 if i > 0:
                     wb.create_sheet()
                 ws = wb.worksheets[i]
-                self.build_sheet(sheet_data, ws, sheet_name=sheet_name, header=header)
+                self.build_sheet(
+                    sheet_data, ws, sheet_name=sheet_name, header=header)
                 i += 1
         else:
             ws = wb.worksheets[0]
             self.build_sheet(data, ws, header=header, widths=widths)
         return wb
-
 
     def list_to_xlsx_file(self, data, title='report', header=None, widths=None):
         """ Make 2D list into a xlsx response for download
@@ -124,8 +123,8 @@ class DataExportMixin(object):
         myfile.write(save_virtual_workbook(wb))
         return myfile
 
-
-    def list_to_xlsx_response(self, data, title='report', header=None, widths=None):
+    def list_to_xlsx_response(self, data, title='report', header=None,
+                              widths=None):
         """ Make 2D list into a xlsx response for download
         data can be a 2d array or a dict of 2d arrays
         like {'sheet_1': [['A1', 'B1']]}
@@ -164,14 +163,15 @@ class DataExportMixin(object):
                 field = field_list[-1]
                 path = '__'.join([str(x) for x in field_list[:-1]])
                 if path:
-                    path += '__' # Legacy format to append a __ here.
+                    path += '__'  # Legacy format to append a __ here.
                 new_model = get_model_from_path_string(model_class, path)
                 model_field = new_model._meta.get_field_by_name(field)[0]
                 choices = model_field.choices
-                new_display_fields.append(DisplayField(path, '', field, '', '', None, None, choices))
+                new_display_fields.append(DisplayField(
+                    path, '', field, '', '', None, None, choices, ''))
             display_fields = new_display_fields
 
-        message= ""
+        message = ""
         objects = self.add_aggregates(queryset, display_fields)
 
         # Display Values
@@ -179,16 +179,19 @@ class DataExportMixin(object):
         property_list = {}
         custom_list = {}
         display_totals = {}
-        def append_display_total(display_totals, display_field, display_field_key):
+
+        def append_display_total(display_totals, display_field,
+                                 display_field_key):
             if display_field.total:
                 display_totals[display_field_key] = {'val': Decimal('0.00')}
 
-
         for i, display_field in enumerate(display_fields):
             model = get_model_from_path_string(model_class, display_field.path)
-            if user.has_perm(model._meta.app_label + '.change_' + model._meta.model_name) \
-            or user.has_perm(model._meta.app_label + '.view_' + model._meta.model_name) \
-            or not model:
+            if display_field.field_type == "Invalid":
+                continue
+            if (user.has_perm(model._meta.app_label + '.change_' + model._meta.model_name)
+                    or user.has_perm(model._meta.app_label + '.view_' + model._meta.model_name)
+                    or not model):
                 # TODO: clean this up a bit
                 display_field_key = display_field.path + display_field.field
                 if display_field.field_type == "Property":
@@ -295,7 +298,7 @@ class DataExportMixin(object):
                                 val = obj.get_custom_value(property_filter.field)
                             else:
                                 val = reduce(getattr, (property_filter.path + property_filter.field).split('__'), obj)
-                        if filter_property(property_filter, val):
+                        if property_filter.filter_property(val):
                             remove_row = True
                             values_and_properties_list.pop()
                             break
@@ -318,7 +321,8 @@ class DataExportMixin(object):
                                 else:
                                     val = None
                             else:
-                                try: # Could error if a related field doesn't exist
+                                # Could error if a related field doesn't exist
+                                try:
                                     val = reduce(getattr, relations, obj)
                                 except AttributeError:
                                     val = None
@@ -397,7 +401,6 @@ class DataExportMixin(object):
                     row[position] = value
             final_list.append(row)
         values_and_properties_list = final_list
-
 
         if display_totals:
             display_totals_row = []
@@ -529,4 +532,3 @@ class GetFieldsMixin(object):
         model_ct = ContentType.objects.get_for_model(new_model)
 
         return (new_fields, model_ct, path)
-
