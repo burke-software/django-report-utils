@@ -197,7 +197,7 @@ class DataExportMixin(object):
                 if display_field.field_type == "Property":
                     property_list[i] = display_field_key
                     append_display_total(display_totals, display_field, display_field_key)
-                elif '[custom' in display_field.field_verbose:
+                elif display_field.field_type == "Custom Field":
                     custom_list[i] = display_field_key
                     append_display_total(display_totals, display_field, display_field_key)
                 elif display_field.aggregate == "Avg":
@@ -291,7 +291,7 @@ class DataExportMixin(object):
                             else:
                                 val = None
                         else:
-                            if '[custom' in property_filter.field_verbose:
+                            if property_filter.field_type == 'Custom Field':
                                 for relation in property_filter.path.split('__'):
                                     if hasattr(obj, root_relation):
                                         obj = getattr(obj, root_relation)
