@@ -52,7 +52,7 @@ def get_custom_fields_from_model(model_class):
         from custom_field.models import CustomField
         try:
             content_type = ContentType.objects.get(
-                model=model_class._meta.module_name,
+                model=model_class._meta.model_name,
                 app_label=model_class._meta.app_label)
         except ContentType.DoesNotExist:
             content_type = None
