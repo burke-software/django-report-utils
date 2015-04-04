@@ -7,6 +7,7 @@ from django.db.models import Avg, Count, Sum, Max, Min
 from openpyxl.workbook import Workbook
 from openpyxl.writer.excel import save_virtual_workbook
 from openpyxl.cell import get_column_letter
+from openpyxl.styles import Font
 import re
 from collections import namedtuple
 from decimal import Decimal
@@ -29,33 +30,15 @@ DisplayField = namedtuple(
 
 class DataExportMixin(object):
     def build_sheet(self, data, ws, sheet_name='report', header=None, widths=None):
-        # Try to detect the openpyxl version, since the API changes
-        # significantly from v1 to v2
-        try:
-            from openpyxl import __major__ as openpyxl_major_version
-            old_openpyxl = openpyxl_major_version < 2
-        except ImportError:
-            old_openpyxl = False
-        if old_openpyxl:
-            first_row = 0
-            column_base = 0
-        else:
-            first_row = 1
-            column_base = 1
+        first_row = 1
+        column_base = 1
 
         ws.title = re.sub(r'\W+', '', sheet_name)[:30]
         if header:
             for i, header_cell in enumerate(header):
                 cell = ws.cell(row=first_row, column=i+column_base)
                 cell.value = header_cell
-                if old_openpyxl:
-                    cell.style.font.bold = True
-                else:
-                    # https://bitbucket.org/ericgazoni/openpyxl/issue/321/unable-to-set-cell-styles-in-version-202
-                    # Immutable styles. U mad?
-                    cell.style = cell.style.copy(
-                        font=cell.style.font.copy(bold=True)
-                    )
+                cell.font = Font(bold=True)
                 if widths:
                     ws.column_dimensions[get_column_letter(i+1)].width = widths[i]
 
