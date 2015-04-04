@@ -73,7 +73,10 @@ def get_model_from_path_string(root_model, path):
                 return root_model
             if field[2]:
                 if hasattr(field[0], 'related'):
-                    root_model = field[0].related.parent_model()
+                    try:
+                        root_model = field[0].related.parent_model()
+                    except AttributeError:
+                        root_model = field[0].related.model
             else:
                 root_model = field[0].model
     return root_model

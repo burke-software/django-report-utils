@@ -470,7 +470,10 @@ class GetFieldsMixin(object):
             path += field_name
             path += '__'
             if field[2]: # Direct field
-                new_model = field[0].related.parent_model
+                try:
+                    new_model = field[0].related.parent_model
+                except AttributeError:
+                    new_model = field[0].related.model
                 path_verbose = new_model.__name__.lower()
             else: # Indirect related field
                 new_model = field[0].model
@@ -497,7 +500,10 @@ class GetFieldsMixin(object):
             field = model_class._meta.get_field_by_name(field_name)
             if field[2]:
                 # Direct field
-                new_model = field[0].related.parent_model()
+                try:
+                    new_model = field[0].related.parent_model()
+                except AttributeError:
+                    new_model = field[0].related.model
             else:
                 # Indirect related field
                 new_model = field[0].model()
