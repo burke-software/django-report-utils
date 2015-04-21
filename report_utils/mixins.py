@@ -469,14 +469,17 @@ class GetFieldsMixin(object):
 
             path += field_name
             path += '__'
-            if field[2]: # Direct field
+            if field[2]:  # Direct field
                 try:
                     new_model = field[0].related.parent_model
                 except AttributeError:
                     new_model = field[0].related.model
                 path_verbose = new_model.__name__.lower()
-            else: # Indirect related field
-                new_model = field[0].model
+            else:  # Indirect related field
+                try:
+                    new_model = field[0].related_model
+                except AttributeError:  # Django 1.7
+                    new_model = field[0].model
                 path_verbose = new_model.__name__.lower()
 
             fields = get_direct_fields_from_model(new_model)
@@ -486,12 +489,12 @@ class GetFieldsMixin(object):
             app_label = new_model._meta.app_label
 
         return {
-           'fields': fields,
-           'custom_fields': custom_fields,
-           'properties': properties,
-           'path': path,
-           'path_verbose': path_verbose,
-           'app_label': app_label,
+            'fields': fields,
+            'custom_fields': custom_fields,
+            'properties': properties,
+            'path': path,
+            'path_verbose': path_verbose,
+            'app_label': app_label,
         }
 
     def get_related_fields(self, model_class, field_name, path="", path_verbose=""):
