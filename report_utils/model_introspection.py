@@ -41,7 +41,7 @@ def get_direct_fields_from_model(model_class):
     all_fields_names = model_class._meta.get_all_field_names()
     for field_name in all_fields_names:
         field = model_class._meta.get_field_by_name(field_name)
-        if field[2] and not field[3] and field[0].__class__.__name__ != "ForeignKey":
+        if field[2] and not field[3] and not hasattr(field[0], 'related'):
             direct_fields += [field[0]]
     return direct_fields
 
