@@ -78,5 +78,8 @@ def get_model_from_path_string(root_model, path):
                     except AttributeError:
                         root_model = field[0].related.model
             else:
-                root_model = field[0].model
+                if hasattr(field[0], 'related_model'):
+                    root_model = field[0].related_model
+                else:
+                    root_model = field[0].model
     return root_model
