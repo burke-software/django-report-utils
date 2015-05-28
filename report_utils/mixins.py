@@ -20,13 +20,13 @@ from report_utils.model_introspection import (
     get_properties_from_model,
     get_direct_fields_from_model,
     get_model_from_path_string,
-    get_custom_fields_from_model,)
+    get_custom_fields_from_model,
+)
 
 DisplayField = namedtuple(
     "DisplayField",
     "path path_verbose field field_verbose aggregate total group choices field_type",
 )
-
 
 class DataExportMixin(object):
     def build_sheet(self, data, ws, sheet_name='report', header=None, widths=None):
@@ -219,12 +219,13 @@ class DataExportMixin(object):
 
             def increment_total(display_field_key, display_totals, val):
                 if display_field_key in display_totals:
-                    # Booleans are Numbers - blah
-                    if isinstance(val, Number) and not isinstance(val, bool):
-                        # do decimal math for all numbers
+                    if isinstance(val, bool):
+                        # True: 1, False: 0
+                        display_totals[display_field_key]['val'] += Decimal(val)
+                    elif isinstance(val, Number):
                         display_totals[display_field_key]['val'] += Decimal(str(val))
-                    else:
-                        display_totals[display_field_key]['val'] += Decimal('1.00')
+                    elif val:
+                        display_totals[display_field_key]['val'] += Decimal(1)
 
             # get pk for primary and m2m relations in order to retrieve objects
             # for adding properties to report rows
@@ -288,8 +289,8 @@ class DataExportMixin(object):
                     if not remove_row:
                         # increment totals for fields
                         for i, field in enumerate(display_field_paths[1:]):
-                            if field in display_totals.keys():
-                                increment_total(field, display_totals, row[i])
+                            if field in display_totals:
+                                increment_total(field, display_totals, row[i + 1])
                         for position, display_property in property_list.items():
                             if not obj:
                                 obj = model_class.objects.get(pk=row.pop(0))
