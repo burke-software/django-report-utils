@@ -399,7 +399,7 @@ class DataExportMixin(object):
             display_totals_row = []
 
             fields_and_properties = list(display_field_paths[1:])
-            for position, value in property_list.iteritems():
+            for position, value in property_list.items():
                 fields_and_properties.insert(position, value)
             for i, field in enumerate(fields_and_properties):
                 if field in display_totals.keys():
