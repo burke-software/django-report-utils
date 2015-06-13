@@ -379,7 +379,7 @@ class DataExportMixin(object):
                         increment_total(field, display_totals, row[i])
             row = list(row)
             for position, choice_list in choice_lists.items():
-                row[position] = unicode(choice_list[row[position]])
+                row[position] = text_type(choice_list[row[position]])
             for position, display_format in display_formats.items():
                 # convert value to be formatted into Decimal in order to apply
                 # numeric formats
