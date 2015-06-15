@@ -362,7 +362,7 @@ class DataExportMixin(object):
 
         if hasattr(display_fields, 'filter'):
             defaults = {
-                None: unicode,
+                None: text_type,
                 datetime.date: lambda: datetime.date(datetime.MINYEAR, 1, 1),
                 datetime.datetime: lambda: datetime.datetime(datetime.MINYEAR, 1, 1),
             }
@@ -428,9 +428,9 @@ class DataExportMixin(object):
 
             for position, choice_list in choice_lists.items():
                 try:
-                    row[position] = unicode(choice_list[row[position]])
+                    row[position] = text_type(choice_list[row[position]])
                 except Exception:
-                    row[position] = unicode(row[position])
+                    row[position] = text_type(row[position])
 
             for pos, style in display_formats.items():
                 row[pos] = formatter(row[pos], style)
