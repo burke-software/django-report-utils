@@ -575,7 +575,10 @@ class GetFieldsMixin(object):
                     new_model = field[0].related.model
             else:
                 # Indirect related field
-                new_model = field[0].model()
+                if hasattr(field[0], 'related_model'):  # Django>=1.8
+                    new_model = field[0].related_model
+                else:
+                    new_model = field[0].model()
 
             if path_verbose:
                 path_verbose += "::"
