@@ -8,6 +8,7 @@ from openpyxl.workbook import Workbook
 from openpyxl.writer.excel import save_virtual_workbook
 from openpyxl.cell import get_column_letter
 from openpyxl.styles import Font
+import csv
 import re
 from collections import namedtuple
 from decimal import Decimal
@@ -81,6 +82,22 @@ class DataExportMixin(object):
         response['Content-Length'] = myfile.tell()
         return response
 
+    def build_csv_response(self, wb, title="report"):
+        """ Take a workbook and return a csv file response """
+        if not title.endswith('.csv'):
+            title += '.csv'
+        myfile = BytesIO()
+        sh = wb.get_active_sheet()
+        c = csv.writer(myfile)
+        for r in sh.rows:
+            c.writerow([cell.value for cell in r])
+        response = HttpResponse(
+            myfile.getvalue(),
+            content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename=%s' % title
+        response['Content-Length'] = myfile.tell()
+        return response
+
     def list_to_workbook(self, data, title='report', header=None, widths=None):
         """ Create just a openpxl workbook from a list of data """
         wb = Workbook()
@@ -121,6 +138,13 @@ class DataExportMixin(object):
         """
         wb = self.list_to_workbook(data, title, header, widths)
         return self.build_xlsx_response(wb, title=title)
+
+    def list_to_csv_response(self, data, title='report', header=None,
+                              widths=None):
+        """ Make 2D list into a csv response for download data.
+        """
+        wb = self.list_to_workbook(data, title, header, widths)
+        return self.build_csv_response(wb, title=title)
 
     def add_aggregates(self, queryset, display_fields):
         agg_funcs = {
