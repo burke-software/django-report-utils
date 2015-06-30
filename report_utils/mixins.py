@@ -28,6 +28,14 @@ DisplayField = namedtuple(
     "path path_verbose field field_verbose aggregate total group choices field_type",
 )
 
+def generate_filename(title):
+    title = title.split('.')[0]
+    title.replace(' ', '_')
+    title += ('_' + datetime.datetime.now().strftime("%m%d_%H%M"))
+    if not title.endswith('.xlsx'):
+        title += '.xlsx'
+    return title
+
 class DataExportMixin(object):
     def build_sheet(self, data, ws, sheet_name='report', header=None, widths=None):
         first_row = 1
@@ -63,8 +71,7 @@ class DataExportMixin(object):
 
     def build_xlsx_response(self, wb, title="report"):
         """ Take a workbook and return a xlsx file response """
-        if not title.endswith('.xlsx'):
-            title += '.xlsx'
+        title = generate_filename(title)
         myfile = BytesIO()
         myfile.write(save_virtual_workbook(wb))
         response = HttpResponse(
