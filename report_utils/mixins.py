@@ -1,4 +1,4 @@
-from six import BytesIO, text_type, string_types
+from six import BytesIO, StringIO, text_type, string_types
 
 from django.http import HttpResponse
 from django.contrib.contenttypes.models import ContentType
@@ -86,7 +86,7 @@ class DataExportMixin(object):
         """ Take a workbook and return a csv file response """
         if not title.endswith('.csv'):
             title += '.csv'
-        myfile = BytesIO()
+        myfile = StringIO()
         sh = wb.get_active_sheet()
         c = csv.writer(myfile)
         for r in sh.rows:
