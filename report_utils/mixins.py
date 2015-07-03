@@ -29,12 +29,12 @@ DisplayField = namedtuple(
     "path path_verbose field field_verbose aggregate total group choices field_type",
 )
 
-def generate_filename(title):
+def generate_filename(title, ends_with):
     title = title.split('.')[0]
     title.replace(' ', '_')
     title += ('_' + datetime.datetime.now().strftime("%m%d_%H%M"))
-    if not title.endswith('.xlsx'):
-        title += '.xlsx'
+    if not title.endswith(ends_with):
+        title += ends_with
     return title
 
 class DataExportMixin(object):
@@ -72,7 +72,7 @@ class DataExportMixin(object):
 
     def build_xlsx_response(self, wb, title="report"):
         """ Take a workbook and return a xlsx file response """
-        title = generate_filename(title)
+        title = generate_filename(title, '.xlsx')
         myfile = BytesIO()
         myfile.write(save_virtual_workbook(wb))
         response = HttpResponse(
@@ -84,8 +84,7 @@ class DataExportMixin(object):
 
     def build_csv_response(self, wb, title="report"):
         """ Take a workbook and return a csv file response """
-        if not title.endswith('.csv'):
-            title += '.csv'
+        title = generate_filename(title, '.csv')
         myfile = StringIO()
         sh = wb.get_active_sheet()
         c = csv.writer(myfile)
@@ -128,6 +127,19 @@ class DataExportMixin(object):
             title += '.xlsx'
         myfile = BytesIO()
         myfile.write(save_virtual_workbook(wb))
+        return myfile
+
+    def list_to_csv_file(self, data, title='report', header=None, widths=None):
+        """ Make a list into a csv response for download.
+        """
+        wb = self.list_to_workbook(data, title, header, widths)
+        if not title.endswith('.csv'):
+            title += '.csv'
+        myfile = StringIO()
+        sh = wb.get_active_sheet()
+        c = csv.writer(myfile)
+        for r in sh.rows:
+            c.writerow([cell.value for cell in r])
         return myfile
 
     def list_to_xlsx_response(self, data, title='report', header=None,
