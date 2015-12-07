@@ -2,7 +2,7 @@ from six import BytesIO, StringIO, text_type, string_types
 
 from django.http import HttpResponse
 from django.contrib.contenttypes.models import ContentType
-from django.db.models.fields.related import ReverseManyRelatedObjectsDescriptor
+from django.db.models.fields.related_descriptors import ManyToManyDescriptor
 from django.db.models import Avg, Count, Sum, Max, Min
 from openpyxl.workbook import Workbook
 from openpyxl.writer.excel import save_virtual_workbook
@@ -312,7 +312,7 @@ class DataExportMixin(object):
                 except AttributeError: # django-hstore schema compatibility
                     continue
 
-                if type(property_root_class) == ReverseManyRelatedObjectsDescriptor:
+                if type(property_root_class) == ManyToManyDescriptor:
                     display_field_paths.insert(1, '%s__pk' % property_root)
                     m2m_relations.append(property_root)
 
