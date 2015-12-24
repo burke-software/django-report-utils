@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = "django-report-utils",
-    version = "0.3.14",
+    version = "0.3.15",
     author = "David Burke",
     author_email = "david@burkesoftware.com",
     description = ("Common report functions used by django-report-builder and django-report-scaffold."),

@@ -2,7 +2,13 @@ from six import BytesIO, StringIO, text_type, string_types
 
 from django.http import HttpResponse
 from django.contrib.contenttypes.models import ContentType
-from django.db.models.fields.related_descriptors import ManyToManyDescriptor
+try:
+    from django.db.models.fields.related_descriptors import ManyToManyDescriptor
+except ImportError:
+    # Django 1.8 compat hack.
+    from django.db.models.fields.related import (
+        ReverseManyRelatedObjectsDescriptor as ManyToManyDescriptor
+    )
 from django.db.models import Avg, Count, Sum, Max, Min
 from openpyxl.workbook import Workbook
 from openpyxl.writer.excel import save_virtual_workbook
